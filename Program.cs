@@ -7,9 +7,13 @@ namespace KattisNumbersOnATree
 {
     internal class Program
     {
+
+        /// <summary>
+        /// 
+        /// </summary>
         static void Main(string[] args)
         {
-			Console.SetIn(new StreamReader(/*"numbertree-03.in"*/"numbers_on_tree_input.txt"));
+			Console.SetIn(new StreamReader(/*"numbertree-02.in"*/"numbers_on_tree_input.txt"));
 
             int creationID = 0;
             string input = null;
@@ -27,95 +31,59 @@ namespace KattisNumbersOnATree
 					path = extractedValues[1];
 				}
                 
-                int currentHeight = 0;
-
-                Node startNode = new Node(0);
-
-                BuildTree(startNode, 0, height+1);
-                SetNodeValues(startNode);
-                Console.WriteLine(GetNodeValue(path, startNode));
+               Console.WriteLine(GetNodeValue(height, path));
 			}
         
             
-            // Builds the tree up to the desired height
-            // nodesCreated is a global variable.
-            void BuildTree(Node currNode, int height, int maxHeight)
-            {
-                int nextHeight = height+1;
-               
-				if ( nextHeight < maxHeight)
-                {
-                    currNode.RightNode = new Node(++creationID);
-                    currNode.LeftNode = new Node(++creationID);
-					
-                    BuildTree(currNode.RightNode, nextHeight, maxHeight);
-                    BuildTree(currNode.LeftNode, nextHeight, maxHeight);
-				}
-            }
             
-            // Sets values for the tree nodes, using bfs traversal.
-            void SetNodeValues(Node startNode)
+
+
+            int GetNodeValue(int height, string path)
             {
-                Node currNode = startNode;
+                /// <summary>
+                /// We know that the tree is a perfect binary tree, which means that each node has 0 or 2 child nodes,
+                /// and each "row" is always full of nodes. Resulting in each new row having double the number of nodes to 
+                /// To calculate the total number of nodes the formula 2^(height+1) -1 is used. 
+                /// 
+                /// We can therefore use bitwise shift to find the total number of nodes.
+                /// </summary>
                
-                // Keeps track of which order to visit the nodes 
-                Queue<Node> nextToVisit = new Queue<Node>();
+                // The number of times the 1 shifts to the left
+                int shiftValue = height + 1;
 
-                // Keeps track of which order to set the values to the nodes. 
-                // First visited, last to receive its value.
-                Stack<Node> valueSetOrde = new Stack<Node>();
+                /// <summary>
+                /// 1 = 0001    : simply the value 1
+                /// <<          : the direction that the shift will move.
+                /// shiftValue  : the number of shifts. 
+                /// </summary>
+                int maxValue = (1 << shiftValue) - 1;
 
-                nextToVisit.Enqueue(startNode);
+				/// <summary>
+                /// Another way of finding the number of nodes is with the bellow for loop.
+                /// 
+				///  for (int i = 0; i < height + 1; i++)
+				///    maxValue += (int)Math.Pow(2, i); 
+				/// </summary>
 
-                while (nextToVisit.Count > 0)
+				// Set root node value
+				int prevNodeValue = 1;
+                
+                // Calculate the values along the path to the desired node. 
+                /// <summary>
+                /// This gives the result in a numerical order 1 -> 2 -> 3 -> 4, and so on. 
+                /// The resulting value has to be converted to the reversed value.
+                /// </summary> 
+				for (int i = 0; i < path.Length; i++)
                 {
-                    currNode = nextToVisit.Dequeue();
-                    valueSetOrde.Push(currNode);
-
-                    // If next nodes are null, then this node is a leaf,
-                    if (currNode.RightNode == null || currNode.LeftNode == null) continue;
-
-					// Adds the new branches to the bfs queue. The order in which they are visited
-                    // is reversed, to allow the value setting to be conducted right to left,
-                    // instead of left to right. 
-					nextToVisit.Enqueue(currNode.LeftNode);
-					nextToVisit.Enqueue(currNode.RightNode);
+                    int nextNodeNumber = path[i] == 'L' ? (prevNodeValue * 2) : (prevNodeValue * 2 + 1);
+                    prevNodeValue = nextNodeNumber;
                 }
 
-				int treeValues = 1;
+                // Reverses the value.
+                int result = maxValue - (prevNodeValue -1);
 
-				while (valueSetOrde.Count > 0)
-                {
-                    valueSetOrde.Pop().Value = treeValues++;
-                }
-            }
-
-            int GetNodeValue(string path, Node startNode)
-            {
-                Node currNode = startNode;
-
-                for (int i = 0; i < path.Length; i++)
-                {
-                    if (path[i] == 'R') currNode = currNode.RightNode;
-                    else currNode = currNode.LeftNode;
-                }
-
-                return currNode.Value;
+                return result;
             }
         }
-
-        // Building blocks for the tree                
-        public class Node
-        {
-            public Node RightNode { get; set; } = null;
-            public Node LeftNode { get; set; } = null;
-            public int Value { get; set; } = 0;
-            public int CreationID { get; set; }
-
-            public Node ( int creationID ) 
-            {
-                CreationID = creationID;
-            }
-		} 
     }
 }
